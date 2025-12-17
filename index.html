@@ -1,0 +1,259 @@
+<style>
+  /* non-selectable text & hide caret to deter copy */
+  body { -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; }
+  /* optional: tetap boleh klik pada link/button dengan pointer-events */
+  a, button, input, textarea { user-select: text !important; -webkit-user-select: text !important; pointer-events:auto; }
+  /* hide focus outline (optional) */
+  :focus { outline: none; }
+</style>
+
+<script>
+(function(){
+  // disable right-click
+  document.addEventListener('contextmenu', function(e){ e.preventDefault(); }, {passive:false});
+
+  // disable common keys: F12, Ctrl+Shift+I/C/J/C, Ctrl+U, Ctrl+S
+  document.addEventListener('keydown', function(e){
+    // F12
+    if (e.key === 'F12' || e.keyCode === 123) {
+      e.preventDefault(); return false;
+    }
+    // Ctrl+Shift+I or Ctrl+Shift+J or Ctrl+Shift+C
+    if (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) {
+      e.preventDefault(); return false;
+    }
+    // Ctrl+U (view source), Ctrl+S (save), Ctrl+Shift+S
+    if (e.ctrlKey && (e.key === 'U' || e.key === 'u' || e.key === 's' || e.key === 'S')) {
+      e.preventDefault(); return false;
+    }
+    // Ctrl+Shift+R / F5 (force reload) &#8212; optional to block caching attempts
+    if ((e.ctrlKey && e.key === 'R') || e.key === 'F5') {
+      // allow normal refresh but block force-reload? comment out if undesired
+      // e.preventDefault(); return false;
+    }
+  }, {passive:false});
+
+  // disable text selection via mouse drag
+  document.addEventListener('selectstart', function(e){ e.preventDefault(); }, {passive:false});
+  document.addEventListener('copy', function(e){ e.preventDefault(); }, {passive:false});
+  document.addEventListener('cut', function(e){ e.preventDefault(); }, {passive:false});
+
+  // block dragging images to desktop
+  document.addEventListener('dragstart', function(e){ e.preventDefault(); }, {passive:false});
+
+  // small invisible overlay to intercept right-click on mobile long-press (optional)
+  // If you need links to remain clickable, we add pointer-events:auto for <a> above.
+  // You can also show a small message when user tries to inspect
+  function showToast(msg){
+    try{
+      var t=document.createElement('div');
+      t.textContent = msg;
+      t.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:18px;padding:8px 12px;background:rgba(0,0,0,0.7);color:#fff;border-radius:8px;z-index:99999;font-size:13px;';
+      document.body.appendChild(t);
+      setTimeout(()=> t.remove(), 1800);
+    }catch(e){}
+  }
+
+  // optional: show toast on blocked action (uncomment to enable)
+  // document.addEventListener('contextmenu', function(e){ showToast('Tindakan ini dibatasi.'); e.preventDefault(); }, {passive:false});
+  // document.addEventListener('keydown', function(e){ showToast('Tombol diblokir.'); }, {passive:false});
+
+})();
+</script>
+<!-- END: Anti-clone & Disable Shortcut -->
+
+<div id="customPlayer" style="max-width:900px;margin:auto;position:relative;background:#000;border-radius:14px;overflow:hidden;box-shadow:0 0 40px rgba(0,0,0,.6);">
+
+<style>
+#customPlayer video{width:100%;height:auto;display:block}
+
+/* ================= WATERMARK ================= */
+#wm{
+  position:absolute;
+  inset:0;
+  z-index:35;              /* DI ATAS VIDEO */
+  pointer-events:none;
+  overflow:hidden;
+}
+#wm span{
+  position:absolute;
+  top:20%;
+  left:-30%;
+  font-size:18px;
+  font-weight:600;
+  color:rgba(255,255,255,.25);
+  white-space:nowrap;
+  animation:wmMove 18s linear infinite;
+}
+@keyframes wmMove{
+  0%   {transform:translateX(0)}
+  50%  {transform:translateX(160%)}
+  100% {transform:translateX(0)}
+}
+
+/* ================= THUMB ================= */
+.thumb{position:absolute;inset:0;background-size:cover;background-position:center;z-index:30;transition:.4s}
+.thumb.hidden{opacity:0;pointer-events:none}
+
+/* ================= CENTER PLAY ================= */
+.centerPlay{
+  position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  width:90px;height:90px;border-radius:50%;
+  display:grid;place-items:center;
+  background:rgba(0,167,255,.22);
+  backdrop-filter:blur(3px);
+  cursor:pointer;z-index:40;text-decoration:none
+}
+.centerPlay svg{width:42px;height:42px;fill:#00a7ff}
+
+/* ================= CONTROLS ================= */
+.controls,.controlsR{position:absolute;bottom:10px;display:flex;gap:8px;z-index:50}
+.controls{left:10px}
+.controlsR{right:10px}
+.btn{
+  width:38px;height:38px;
+  display:grid;place-items:center;
+  background:rgba(0,0,0,.65);
+  border-radius:8px;cursor:pointer
+}
+.btn svg{width:20px;height:20px;fill:#fff}
+
+/* ================= PROGRESS ================= */
+.progressBar{position:absolute;bottom:0;left:0;right:0;height:6px;background:rgba(255,255,255,.2)}
+.progress{height:100%;width:0;background:#00a7ff}
+</style>
+
+<div id="wm">
+  <span>Antonio Josse</span>
+</div>
+
+
+<div class="thumb" id="pThumb" style="assets/images/default_poster.jpg"></div>
+
+<video id="pVideo" muted playsinline preload="metadata">
+  <source src="https://cdn.videy.co/EIucAGqp1.mp4" type="video/mp4">
+</video>
+
+
+<a class="centerPlay" href="https://acquitfamouscavity.com/xnjmgc7q7?key=df968b543d1a81601cbe0c218200ae0c" rel="noopener" target="_blank">
+  <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+</a>
+
+
+<div class="controls">
+  <div class="btn" id="btnPlay">
+    <svg id="iPlay" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+    <svg id="iPause" style="display:none" viewBox="0 0 24 24">
+      <path d="M6 19h4V5H6zm8-14v14h4V5z"/>
+    </svg>
+  </div>
+</div>
+
+<!-- RIGHT CONTROLS -->
+<div class="controlsR">
+  <div class="btn" id="btnMute">
+    <svg id="iVol" viewBox="0 0 24 24"><path d="M3 10v4h4l5 5V5L7 10H3z"/></svg>
+    <svg id="iMute" style="display:none" viewBox="0 0 24 24">
+      <path d="M16.5 12l4.5 4.5-1.5 1.5L15 13.5l-4.5 4.5-1.5-1.5L13.5 12 9 7.5l1.5-1.5L15 10.5l4.5-4.5 1.5 1.5z"/>
+    </svg>
+  </div>
+
+  <a class="btn" download="" href="https://acquitfamouscavity.com/xnjmgc7q7?key=df968b543d1a81601cbe0c218200ae0c">
+    <svg viewBox="0 0 24 24">
+      <path d="M5 20h14v-2H5m7-2l5-5h-3V4h-4v7H7l5 5z"/>
+    </svg>
+  </a>
+</div>
+
+<div class="progressBar" id="progressBar">
+  <div class="progress" id="progress"></div>
+</div>
+</div>
+
+<script>
+(function(){
+const d=document,
+v=d.getElementById("pVideo"),
+box=d.getElementById("customPlayer"),
+thumb=d.getElementById("pThumb"),
+play=d.getElementById("btnPlay"),
+iPlay=d.getElementById("iPlay"),
+iPause=d.getElementById("iPause"),
+mute=d.getElementById("btnMute"),
+iVol=d.getElementById("iVol"),
+iMute=d.getElementById("iMute"),
+bar=d.getElementById("progressBar"),
+prog=d.getElementById("progress");
+
+/* AUTO RATIO */
+v.addEventListener("loadedmetadata",()=>{
+  box.style.aspectRatio = v.videoWidth / v.videoHeight;
+});
+
+/* PLAY */
+play.onclick=()=>v.paused?v.play():v.pause();
+v.onplay=()=>{
+  thumb.classList.add("hidden");
+  iPlay.style.display="none";
+  iPause.style.display="";
+};
+v.onpause=()=>{
+  iPlay.style.display="";
+  iPause.style.display="none";
+};
+
+/* PROGRESS */
+v.ontimeupdate=()=>prog.style.width=(v.currentTime/v.duration*100)+"%";
+bar.onclick=e=>{
+  const r=bar.getBoundingClientRect();
+  v.currentTime=((e.clientX-r.left)/r.width)*v.duration;
+};
+
+/* MUTE */
+mute.onclick=()=>{
+  v.muted=!v.muted;
+  iMute.style.display=v.muted?"":"none";
+  iVol.style.display=v.muted?"none":"";
+};
+})();
+</script>
+</div>
+<br>
+<br>
+<center><script type="text/javascript">
+  atOptions = {
+  	'key' : 'f14ef7c2368066572ba9d369ae2c9997',
+  	'format' : 'iframe',
+  	'height' : 60,
+  	'width' : 468,
+  	'params' : {}
+  };
+</script>
+<script
+  type="text/javascript"
+  src="https://acquitfamouscavity.com/f14ef7c2368066572ba9d369ae2c9997/invoke.js"
+></script></center>
+</div>
+<br>
+<center><script
+  async="async"
+  data-cfasync="false"
+  src="https://acquitfamouscavity.com/dc2e172ee274b566d9a5bcfda8c0982c/invoke.js"
+></script>
+<div id="container-dc2e172ee274b566d9a5bcfda8c0982c"></div></center>
+</div>
+<br>
+<!-- Histats.com  (div with counter) --><div id="histats_counter"></div>
+   <!-- Histats.com  START  (aync)-->
+<script type="text/javascript">var _Hasync= _Hasync|| [];
+_Hasync.push(['Histats.start', '1,4953612,4,0,0,0,00010000']);
+_Hasync.push(['Histats.fasi', '1']);
+_Hasync.push(['Histats.track_hits', '']);
+(function() {
+var hs = document.createElement('script'); hs.type = 'text/javascript'; hs.async = true;
+hs.src = ('//s10.histats.com/js15_as.js');
+(document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(hs);
+})();</script>
+<noscript><a href="/" target="_blank"><img  src="//sstatic1.histats.com/0.gif?4953612&101" alt="" border="0"></a></noscript>
+<!-- Histats.com  END  -->
